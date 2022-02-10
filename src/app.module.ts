@@ -6,7 +6,9 @@ import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      envFilePath: '.env',
+    }),
     DatabaseModule,
     AuthModule,
     UsersModule,

@@ -6,7 +6,6 @@ export class MailService {
   constructor(private readonly mailerService: MailerService) {}
 
   async sendMail(to: string, token: string) {
-
     const url = `http://localhost:3000/api/auth/confirmPassword/${token}`;
 
     await this.mailerService
@@ -160,12 +159,14 @@ export class MailService {
         </html>`,
       })
       .then(() => {
-        console.log('Mail sent');
+        return {
+          message: 'Email sent successfully',
+        };
       })
       .catch(() => {
         console.log('Mail not sent');
       });
-      
+
     return {
       message: 'A password reset link has been sent to your email',
     };

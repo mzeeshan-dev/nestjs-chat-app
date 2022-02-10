@@ -1,13 +1,20 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { comparePassword, passwordHashing } from 'src/common/utils/bcrypt';
 import { User } from 'src/models/user/user.model';
 import { MailService } from 'src/modules/mailer/mail.servcie';
 import { ResetPassTokenService } from 'src/modules/resetPassToken/resetPassToken.service';
 import { UsersService } from 'src/modules/users/users.service';
-import { ForgetPassDTO } from './dto/forgetPass.dto';
-import { ResetPassDTO } from './dto/resetPass.dto';
+import { ForgetPassDTO } from './dto/ForgotPass.dto';
+import { ResetPassDTO } from './dto/ResetPass.dto';
 import { SignUpDTO } from './dto/SignUp.dto';
+import { VerifyTokenDto } from './dto/VerifyToken.dto';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +41,13 @@ export class AuthService {
         return rest;
       }
     } else {
-      throw new BadRequestException('User does not exist');
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'User Does Not Exist',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
     return null;
   }
@@ -57,32 +70,72 @@ export class AuthService {
       where: { email },
     });
 
-    if (alreadyCreated) {
-      console.log('User already exists');
-    } else {
+    if (!alreadyCreated) {
       return await this.usersRepository.create({
         ...createUserData,
         password: await passwordHashing(password),
       });
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'User Already Exists With This Email',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 
   async forgotPassword(forgetPasswordData: ForgetPassDTO) {
     const { email } = forgetPasswordData;
+
     const user = await this.userService.findOneByEmail(email);
 
-    if (!user) {
-      throw new BadRequestException('User does not exist');
-    } else {
+    if (user) {
       const token = Math.random().toString(36).substring(2, 15);
-      await this.resetPassTokenService.createPasswordToken({ passwordData: token, email });
+
+      await this.resetPassTokenService.createPasswordToken({
+        token,
+        email,
+      });
       await this.mailService.sendMail(email, token);
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'User Does Not Exist',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  async verifyToken(verifyTokenData: VerifyTokenDto) {
+    const { email, token } = verifyTokenData;
+
+    const resetPassToken =
+      await this.resetPassTokenService.findOneByEmailAndToken(email, token);
+
+    if (resetPassToken) {
+      return {
+        message: 'Token Verified',
+      };
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'Token Is Invalid Or Expired',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 
   async resetPassword(resetPasswordData: ResetPassDTO) {
     const { token, password, password_confirm } = resetPasswordData;
-    const resetPasswordToken = await this.resetPassTokenService.findOneByToken(token);
+    const resetPasswordToken = await this.resetPassTokenService.findOneByToken(
+      token,
+    );
     if (resetPasswordToken) {
       if (password !== password_confirm) {
         throw new BadRequestException('Passwords do not match');
