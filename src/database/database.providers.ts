@@ -1,5 +1,5 @@
 import { Sequelize } from 'sequelize-typescript';
-import { ResetPassToken } from 'src/models/auth/resetPassToken.model';
+import { ResetPassToken } from 'src/models/resetPassToken/resetPassToken.model';
 import { User } from '../models/user/user.model';
 
 export const databaseProviders = [

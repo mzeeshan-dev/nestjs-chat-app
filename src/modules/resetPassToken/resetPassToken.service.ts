@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ResetPassToken } from 'src/models/auth/resetPassToken.model';
+import { ResetPassToken } from 'src/models/resetPassToken/resetPassToken.model';
 
 @Injectable()
 export class ResetPassTokenService {

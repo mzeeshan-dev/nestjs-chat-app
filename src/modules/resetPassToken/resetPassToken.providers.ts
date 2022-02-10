@@ -1,4 +1,4 @@
-import { ResetPassToken } from "src/models/auth/resetPassToken.model";
+import { ResetPassToken } from "src/models/resetPassToken/resetPassToken.model";
 
 
 export const resetPassTokenProviders = [
