@@ -14,7 +14,7 @@ import { UsersService } from 'src/modules/users/users.service';
 import { ForgetPassDTO } from './dto/ForgotPass.dto';
 import { ResetPassDTO } from './dto/ResetPass.dto';
 import { SignUpDTO } from './dto/SignUp.dto';
-import { VerifyTokenDto } from './dto/VerifyToken.dto';
+import { VerifyTokenDTO } from './dto/VerifyToken.dto';
 
 @Injectable()
 export class AuthService {
@@ -98,7 +98,7 @@ export class AuthService {
         token,
         email,
       });
-      await this.mailService.sendMail(email, token);
+      return await this.mailService.sendMail(email, token);
     } else {
       throw new HttpException(
         {
@@ -110,7 +110,7 @@ export class AuthService {
     }
   }
 
-  async verifyToken(verifyTokenData: VerifyTokenDto) {
+  async verifyToken(verifyTokenData: VerifyTokenDTO) {
     const { email, token } = verifyTokenData;
 
     const resetPassToken =

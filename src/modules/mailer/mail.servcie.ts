@@ -6,7 +6,7 @@ export class MailService {
   constructor(private readonly mailerService: MailerService) {}
 
   async sendMail(to: string, token: string) {
-    const url = `http://localhost:3000/api/auth/confirmPassword/${token}`;
+    const url = `http://localhost:3000/auth/resetpassword?email=${to}&token=${token}`;
 
     await this.mailerService
       .sendMail({

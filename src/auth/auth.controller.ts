@@ -6,7 +6,7 @@ import { ForgetPassDTO } from './dto/ForgotPass.dto';
 import { ResetPassDTO } from './dto/ResetPass.dto';
 import { SignInDTO } from './dto/SignIn.dto';
 import { SignUpDTO } from './dto/SignUp.dto';
-import { VerifyTokenDto } from './dto/VerifyToken.dto';
+import { VerifyTokenDTO } from './dto/VerifyToken.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @ApiTags('Authentication')
@@ -32,14 +32,14 @@ export class AuthController {
   }
 
   @Post('verify-token')
-  async verifyToken(@Body() verifyTokenData: VerifyTokenDto) {
-    console.log(verifyTokenData);
-    
+  async verifyToken(@Body() verifyTokenData: VerifyTokenDTO) {
     return this.authService.verifyToken(verifyTokenData);
   }
 
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordData: ResetPassDTO) {
-    // return this.authService.resetPassword(resetPasswordData);
+    console.log(resetPasswordData);
+    
+    return this.authService.resetPassword(resetPasswordData);
   }
 }
