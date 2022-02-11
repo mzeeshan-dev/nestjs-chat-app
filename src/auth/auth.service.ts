@@ -63,7 +63,7 @@ export class AuthService {
     };
   }
 
-  async signUpUser(createUserData: SignUpDTO): Promise<User> {
+  async signUpUser(createUserData: SignUpDTO) {
     const { email, password } = createUserData;
 
     const alreadyCreated = await this.usersRepository.findOne({
@@ -71,10 +71,15 @@ export class AuthService {
     });
 
     if (!alreadyCreated) {
-      return await this.usersRepository.create({
-        ...createUserData,
-        password: await passwordHashing(password),
-      });
+      try {
+        const usersData = await this.usersRepository.create({
+          ...createUserData,
+          password: await passwordHashing(password),
+        });
+        return usersData;
+      } catch (error) {
+        return error;
+      }
     } else {
       throw new HttpException(
         {
