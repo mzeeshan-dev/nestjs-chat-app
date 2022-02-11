@@ -72,11 +72,10 @@ export class AuthService {
 
     if (!alreadyCreated) {
       try {
-        const usersData = await this.usersRepository.create({
+        return await this.usersRepository.create({
           ...createUserData,
           password: await passwordHashing(password),
         });
-        return usersData;
       } catch (error) {
         return error;
       }
