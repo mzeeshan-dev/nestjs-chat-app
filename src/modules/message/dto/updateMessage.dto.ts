@@ -2,9 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateMessageDTO {
   @ApiProperty()
-  sender_id: string;
+  id: number;
   @ApiProperty()
-  receiver_id: string;
+  sender_id: number;
+  @ApiProperty()
+  receiver_id: number;
   @ApiProperty()
   message: string;
   @ApiProperty()

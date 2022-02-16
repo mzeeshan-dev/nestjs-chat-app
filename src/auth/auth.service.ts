@@ -6,6 +6,7 @@ import {
   Injectable
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import * as path from 'path';
 import { comparePassword, passwordHashing } from 'src/common/utils/bcrypt';
 import { User } from 'src/models/user/user.model';
 import { MailService } from 'src/modules/mailer/mail.servcie';
@@ -52,6 +53,10 @@ export class AuthService {
     return null;
   }
 
+  async verifyJWT(jwt: string): Promise<any> {
+    return await this.jwtService.verifyAsync(jwt);
+  }
+
   async logInUser(user: any) {
     const payload = {
       username: user.username,
@@ -66,6 +71,9 @@ export class AuthService {
   async signUpUser(createUserData: SignUpDTO) {
     const { email, password } = createUserData;
 
+    const projectFolder = path.resolve('./');
+    const image_path = `${projectFolder}/public/images/user-image.png`;
+
     const alreadyCreated = await this.usersRepository.findOne({
       where: { email },
     });
@@ -74,6 +82,7 @@ export class AuthService {
       try {
         return await this.usersRepository.create({
           ...createUserData,
+          image_path,
           password: await passwordHashing(password),
         });
       } catch (error) {
@@ -140,6 +149,7 @@ export class AuthService {
     const resetPasswordToken = await this.resetPassTokenService.findOneByToken(
       token,
     );
+
     if (resetPasswordToken) {
       if (password !== password_confirm) {
         throw new BadRequestException('Passwords do not match');

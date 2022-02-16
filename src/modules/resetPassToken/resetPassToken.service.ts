@@ -12,8 +12,12 @@ export class ResetPassTokenService {
     return await this.resetPassRepository.create(data);
   }
 
-  async findOneByToken(token: any): Promise<ResetPassToken> {
-    return await this.resetPassRepository.findOne(token);
+  async findOneByToken(token: string): Promise<ResetPassToken> {
+    return await this.resetPassRepository.findOne({
+      where: {
+        token,
+      },
+    });
   }
 
   async findOneByEmailAndToken(

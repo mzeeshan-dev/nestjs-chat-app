@@ -19,4 +19,7 @@ export class User extends Model {
 
   @Column
   password: string;
+
+  @Column
+  image_path: string;
 }

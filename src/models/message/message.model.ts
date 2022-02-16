@@ -15,5 +15,5 @@ export class Message extends Model {
   message: string;
 
   @Column
-  date: Date;
+  timestamp: Date;
 }
