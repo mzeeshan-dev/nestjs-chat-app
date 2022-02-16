@@ -11,8 +11,8 @@ import { MailService } from './mail.servcie';
         ignoreTLS: true,
         secure: false,
         auth: {
-          user: 'eefd3bbb134a31',
-          pass: '878b3689f5c8d2',
+          user: '4a13f331ad2295',
+          pass: '542441adfedd07',
         },
       },
 

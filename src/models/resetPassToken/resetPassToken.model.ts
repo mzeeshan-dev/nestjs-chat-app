@@ -5,7 +5,7 @@ export class ResetPassToken extends Model {
   @Column({ primaryKey: true, autoIncrement: true })
   id: number;
 
-  @Column({ unique: true })
+  @Column
   email: string;
 
   @Column

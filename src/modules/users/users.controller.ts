@@ -45,5 +45,14 @@ import { UsersService } from './users.service';
     destroy(@Param() params): Promise<User> {
       return this.userService.destroy(params.id);
     }
+
+    /*/
+     ***** upload user image
+     ***** settings/upload-image
+    /*/
+
+    @Put('/upload-image/:id')
+    @ApiParam({ name: 'id' })
+    uploadImage(@Param() params, @Body() updateUserDto: UserDTO) {}
   }
   

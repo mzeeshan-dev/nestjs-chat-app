@@ -1,13 +1,21 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import * as path from 'path';
 import { comparePassword, passwordHashing } from 'src/common/utils/bcrypt';
 import { User } from 'src/models/user/user.model';
 import { MailService } from 'src/modules/mailer/mail.servcie';
 import { ResetPassTokenService } from 'src/modules/resetPassToken/resetPassToken.service';
 import { UsersService } from 'src/modules/users/users.service';
-import { ForgetPassDTO } from './dto/forgetPass.dto';
-import { ResetPassDTO } from './dto/resetPass.dto';
+import { ForgetPassDTO } from './dto/ForgotPass.dto';
+import { ResetPassDTO } from './dto/ResetPass.dto';
 import { SignUpDTO } from './dto/SignUp.dto';
+import { VerifyTokenDTO } from './dto/VerifyToken.dto';
 
 @Injectable()
 export class AuthService {
@@ -34,9 +42,19 @@ export class AuthService {
         return rest;
       }
     } else {
-      throw new BadRequestException('User does not exist');
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'User Does Not Exist',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
     return null;
+  }
+
+  async verifyJWT(jwt: string): Promise<any> {
+    return await this.jwtService.verifyAsync(jwt);
   }
 
   async logInUser(user: any) {
@@ -50,39 +68,88 @@ export class AuthService {
     };
   }
 
-  async signUpUser(createUserData: SignUpDTO): Promise<User> {
+  async signUpUser(createUserData: SignUpDTO) {
     const { email, password } = createUserData;
+
+    const projectFolder = path.resolve('./');
+    const image_path = `${projectFolder}/public/images/user-image.png`;
 
     const alreadyCreated = await this.usersRepository.findOne({
       where: { email },
     });
 
-    if (alreadyCreated) {
-      console.log('User already exists');
+    if (!alreadyCreated) {
+      try {
+        return await this.usersRepository.create({
+          ...createUserData,
+          image_path,
+          password: await passwordHashing(password),
+        });
+      } catch (error) {
+        return error;
+      }
     } else {
-      return await this.usersRepository.create({
-        ...createUserData,
-        password: await passwordHashing(password),
-      });
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'User Already Exists With This Email',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 
   async forgotPassword(forgetPasswordData: ForgetPassDTO) {
     const { email } = forgetPasswordData;
+
     const user = await this.userService.findOneByEmail(email);
 
-    if (!user) {
-      throw new BadRequestException('User does not exist');
-    } else {
+    if (user) {
       const token = Math.random().toString(36).substring(2, 15);
-      await this.resetPassTokenService.createPasswordToken({ passwordData: token, email });
-      await this.mailService.sendMail(email, token);
+
+      await this.resetPassTokenService.createPasswordToken({
+        token,
+        email,
+      });
+      return await this.mailService.sendMail(email, token);
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'User Does Not Exist',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  async verifyToken(verifyTokenData: VerifyTokenDTO) {
+    const { email, token } = verifyTokenData;
+
+    const resetPassToken =
+      await this.resetPassTokenService.findOneByEmailAndToken(email, token);
+
+    if (resetPassToken) {
+      return {
+        message: 'Token Verified',
+      };
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'Token Is Invalid Or Expired',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 
   async resetPassword(resetPasswordData: ResetPassDTO) {
     const { token, password, password_confirm } = resetPasswordData;
-    const resetPasswordToken = await this.resetPassTokenService.findOneByToken(token);
+    const resetPasswordToken = await this.resetPassTokenService.findOneByToken(
+      token,
+    );
+
     if (resetPasswordToken) {
       if (password !== password_confirm) {
         throw new BadRequestException('Passwords do not match');
