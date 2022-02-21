@@ -12,6 +12,7 @@ import { MessageService } from '../message/message.service';
 import { UsersService } from '../users/users.service';
 
 @WebSocketGateway({
+  // namespace: '/chat',
   // give access to the socket.io server
   cors: {
     origin: '*',
@@ -28,19 +29,6 @@ export class ChatGateway
 
   @WebSocketServer() // creates websockets server instance
   server: Server;
-
-  @SubscribeMessage('msgToServer')
-  handleMessage(client: Socket, payload: string) {
-    this.server.emit('msgToClient', payload);
-
-    // create message in the database
-    return this.msgService.createMessage({
-      sender_id: 1,
-      receiver_id: 2,
-      message: payload,
-      timestamp: new Date(),
-    });
-  }
 
   afterInit() {
     console.log(`Gateway Initialized`);
@@ -63,6 +51,31 @@ export class ChatGateway
     } catch (error) {
       console.log(error);
     }
+  }
+
+  @SubscribeMessage('msgToServer')
+  handleMessage(client: Socket, payload: string) {
+    this.server.emit('msgToClient', payload);
+
+    // create message in the database
+    return this.msgService.createMessage({
+      sender_id: 1,
+      receiver_id: 2,
+      message: payload,
+      timestamp: new Date(),
+    });
+  }
+
+  @SubscribeMessage('joinRoom')
+  handleJoinRoom(client: Socket, payload: string) {
+    client.join('aRoom');
+    client.to('aRoom').emit('roomCreated', { room: 'aRoom' });
+  }
+
+  @SubscribeMessage('leaveRoom')
+  handleLeaveRoom(client: Socket, payload: string) {
+    client.leave(payload);
+    client.emit('leftRoom', payload);
   }
 
   handleDisconnect(client: Socket) {
