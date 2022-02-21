@@ -1,4 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import * as path from 'path';
+import { FirebaseStorageService } from 'src/common/services/firebaseStorage.service';
 import { User } from '../../models/user/user.model';
 import { UserDTO } from './dto/User.dto';
 
@@ -7,6 +9,7 @@ export class UsersService {
   constructor(
     @Inject('USERS_REPOSITORY')
     private usersRepository: typeof User,
+    private firebaseStorageService: FirebaseStorageService,
   ) {}
 
   findAll(): Promise<User[]> {
@@ -75,5 +78,48 @@ export class UsersService {
         email,
       },
     });
+  }
+
+  async uploadUserProfile(id: number, file: Express.Multer.File) {
+    const user = await this.findOneById(id);
+    const isLocalPath = path.basename(user.image_path).includes('user-image');
+    const isFirebasePath = user.image_path.split('/').includes('profile');
+
+    try {
+      if (file.size <= 5000000 && user) {
+        if (isLocalPath) {
+          user.image_path = null;
+          this.uploadImageHelper(file, id, user);
+        } else if (isFirebasePath) {
+          await this.firebaseStorageService.deleteFile(user.image_path);
+          await this.uploadImageHelper(file, id, user);
+        } else {
+          this.uploadImageHelper(file, id, user);
+        }
+      } else {
+        console.log('File cannot be uploaded');
+      }
+    } catch (error) {
+      throw new ForbiddenException({
+        status: 400,
+        message: 'Error uploading profile image',
+        error,
+      });
+    }
+  }
+
+  // ==================== Helper Methods  ====================
+
+  async uploadImageHelper(
+    file: Express.Multer.File,
+    user_id: number,
+    user: User,
+  ) {
+    const fileResponse = await this.firebaseStorageService.uploadFile(
+      file,
+      user_id,
+    );
+    user.image_path = fileResponse.metadata.fullPath;
+    user.save();
   }
 }

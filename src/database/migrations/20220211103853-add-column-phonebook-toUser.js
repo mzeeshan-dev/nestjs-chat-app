@@ -12,7 +12,7 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     return Promise.all([
-      queryInterface.removeColumn('Contacts', 'avatar_path'),
+      queryInterface.removeColumn('Users', 'phone_number'),
     ]);
   },
 };
